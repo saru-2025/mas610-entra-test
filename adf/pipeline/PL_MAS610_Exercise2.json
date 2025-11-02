@@ -1,0 +1,176 @@
+{
+	"name": "PL_MAS610_Exercise2",
+	"properties": {
+		"activities": [
+			{
+				"name": "Bronze_Load",
+				"type": "DatabricksNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Shared/MAS610_Bronze_Load",
+					"baseParameters": {
+						"input_dir": {
+							"value": "@pipeline().parameters.bronze_dir",
+							"type": "Expression"
+						},
+						"silver_dir": {
+							"value": "@pipeline().parameters.silver_dir",
+							"type": "Expression"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_AzureDatabricks",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Silver_Transform",
+				"type": "DatabricksNotebook",
+				"dependsOn": [
+					{
+						"activity": "Bronze_Load",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Shared/MAS610_Silver_Transform",
+					"baseParameters": {
+						"silver_dir": {
+							"value": "@pipeline().parameters.silver_dir",
+							"type": "Expression"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_AzureDatabricks",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Gold_FactExposure",
+				"type": "DatabricksNotebook",
+				"dependsOn": [
+					{
+						"activity": "Silver_Transform",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Shared/MAS610_Gold_FactExposure",
+					"baseParameters": {
+						"silver_dir": {
+							"value": "@pipeline().parameters.silver_dir",
+							"type": "Expression"
+						},
+						"gold_dir": {
+							"value": "@pipeline().parameters.gold_dir",
+							"type": "Expression"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_AzureDatabricks",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Success_Notification",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Gold_FactExposure",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.01:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"url": "https://prod-00.westeurope.logic.azure.com/workflows/<YOUR_SUCCESS_LOGICAPP_ID>/triggers/manual/paths/invoke?api-version=2016-10-01",
+					"body": {
+						"text": "✅ MAS610_Exercise2 pipeline completed successfully at @{utcNow()}."
+					}
+				}
+			},
+			{
+				"name": "Failure_Notification",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Gold_FactExposure",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.01:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"url": "https://prod-00.westeurope.logic.azure.com/workflows/<YOUR_FAILURE_LOGICAPP_ID>/triggers/manual/paths/invoke?api-version=2016-10-01",
+					"body": {
+						"text": "❌ MAS610_Exercise2 pipeline failed at @{utcNow()}. Please investigate."
+					}
+				}
+			}
+		],
+		"parameters": {
+			"bronze_dir": {
+				"type": "String",
+				"defaultValue": "/mnt/raw/mas610_ex2"
+			},
+			"silver_dir": {
+				"type": "String",
+				"defaultValue": "/mnt/silver/mas610_ex2"
+			},
+			"gold_dir": {
+				"type": "String",
+				"defaultValue": "/mnt/gold/mas610"
+			}
+		},
+		"annotations": [
+			"MAS610 Exercise2 Pipeline with Notifications"
+		],
+		"lastPublishTime": "2025-10-30T18:58:42Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
