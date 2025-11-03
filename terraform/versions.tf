@@ -8,9 +8,3 @@ terraform {
     }
   }
 }
-
-# Configure provider installation method
-provider_meta "databricks" {
-  installation_method = "filesystem"
-  mirror_path        = "providers"
-}
