@@ -1,0 +1,222 @@
+{
+	"name": "PL_RealTime_RiskFeed",
+	"properties": {
+		"description": "End-to-end real-time risk feed ingestion and aggregation pipeline for Databricks + ADLS + Power BI",
+		"activities": [
+			{
+				"name": "Config_Env",
+				"type": "DatabricksNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 1,
+					"retryIntervalInSeconds": 30
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Shared/_config_riskfeed",
+					"baseParameters": {
+						"container": "raw",
+						"storage_account": "stdatahubsg"
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_AzureDatabricks",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Get_Files",
+				"type": "GetMetadata",
+				"dependsOn": [
+					{
+						"activity": "Config_Env",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 1,
+					"retryIntervalInSeconds": 30
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DS_ADLS_Raw",
+						"type": "DatasetReference"
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "JsonReadSettings"
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS_Storage",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Filter_JSON_Files",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "Get_Files",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get_Files').output.childItems",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@endsWith(item().name, '.json')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ForEach_Producer",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Filter_JSON_Files",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Filter_JSON_Files').output.value",
+						"type": "Expression"
+					},
+					"batchCount": 1,
+					"activities": [
+						{
+							"name": "Producer_EventHub",
+							"type": "DatabricksNotebook",
+							"dependsOn": [],
+							"policy": {
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"notebookPath": "/Shared/producer_eventhub_per_file",
+								"baseParameters": {
+									"file_name": {
+										"value": "@item().name",
+										"type": "Expression"
+									},
+									"interval_sec": {
+										"value": "@string(pipeline().parameters.poll_interval)",
+										"type": "Expression"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "LS_AzureDatabricks",
+								"type": "LinkedServiceReference"
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Consumer_Stream",
+				"type": "DatabricksNotebook",
+				"dependsOn": [
+					{
+						"activity": "ForEach_Producer",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Shared/consumer_streaming_riskfeed",
+					"baseParameters": {
+						"window": "2 minutes"
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_AzureDatabricks",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "PowerBI_Refresh",
+				"type": "WebActivity",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [
+					{
+						"activity": "Consumer_Stream",
+						"dependencyConditions": [
+							"Skipped"
+						]
+					}
+				],
+				"policy": {
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"headers": {
+						"Authorization": "Bearer <PowerBI_token>",
+						"Content-Type": "application/json"
+					},
+					"url": "https://api.powerbi.com/v1.0/myorg/groups/{workspaceId}/datasets/{datasetId}/refreshes"
+				}
+			}
+		],
+		"parameters": {
+			"base_path": {
+				"type": "String",
+				"defaultValue": "abfss://raw@stdatahubsg.dfs.core.windows.net"
+			},
+			"cluster_name": {
+				"type": "String",
+				"defaultValue": "dataeng_cluster"
+			},
+			"file_pattern": {
+				"type": "String",
+				"defaultValue": "trades_*.json"
+			},
+			"poll_interval": {
+				"type": "Int",
+				"defaultValue": 120
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-10-30T16:58:57Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
