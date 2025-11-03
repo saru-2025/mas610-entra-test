@@ -12,7 +12,7 @@ env:
   DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
 
 jobs:
-  init:
+    init:
     name: 1️⃣ Terraform Init
     runs-on: ubuntu-latest
     steps:
@@ -24,9 +24,11 @@ jobs:
         with:
           terraform_version: 1.5.7
 
-      - name: Terraform Init
+      - name: Terraform Init (clean + upgrade)
         working-directory: ${{ env.TF_WORKING_DIR }}
-        run: terraform init
+        run: |
+          rm -rf .terraform .terraform.lock.hcl || true
+          terraform init -upgrade
 
   validate:
     name: 2️⃣ Terraform Validate
