@@ -33,3 +33,9 @@ variable "databricks_token" {
   type        = string
 }
 
+variable "databricks_host" {
+  description = "Databricks workspace host URL (e.g. https://adb-xxxx.azuredatabricks.net). If empty, DATABRICKS_HOST env var is used."
+  type        = string
+  default     = ""
+}
+
