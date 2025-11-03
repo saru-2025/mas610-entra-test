@@ -1,4 +1,4 @@
-name: Terraform Databricks CI/CD (Automated Stages)
+name: Terraform Databricks CI/CD (Fixed Provider Cache)
 
 on:
   push:
@@ -16,23 +16,20 @@ jobs:
     name: 1️⃣ Terraform Init (Clean + Upgrade)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
 
-      # Force clean the provider cache and upgrade
-      - name: Terraform Init (clean + upgrade)
+      - name: Clean provider cache & re-initialize
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
-          echo "🧹 Cleaning previous provider cache..."
+          echo "🧹 Removing old providers and lock file..."
           rm -rf .terraform .terraform.lock.hcl || true
-          echo "🚀 Running terraform init -upgrade"
+          echo "🚀 Re-initializing Terraform with upgrade..."
           terraform init -upgrade
-          echo "✅ Providers installed:"
+          echo "🔍 Installed providers:"
           terraform providers
 
   validate:
@@ -40,18 +37,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: init
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
-
-      - name: Terraform Format & Validate
+      - name: Validate configuration
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
-          echo "🧩 Formatting and validating Terraform configuration..."
           terraform fmt -recursive
           terraform validate
 
@@ -60,22 +52,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: validate
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
-
       - name: Terraform Plan
         working-directory: ${{ env.TF_WORKING_DIR }}
-        run: |
-          echo "🗺️ Generating Terraform plan..."
-          terraform plan -out=tfplan
-
-      - name: Upload Terraform Plan Artifact
-        uses: actions/upload-artifact@v4
+        run: terraform plan -out=tfplan
+      - uses: actions/upload-artifact@v4
         with:
           name: terraform-plan
           path: ${{ env.TF_WORKING_DIR }}/tfplan
@@ -86,22 +70,14 @@ jobs:
     needs: plan
     environment: production
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
-
-      - name: Download Terraform Plan
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: terraform-plan
           path: ${{ env.TF_WORKING_DIR }}
-
-      - name: Terraform Apply
+      - name: Apply Terraform plan
         working-directory: ${{ env.TF_WORKING_DIR }}
-        run: |
-          echo "⚙️ Applying Terraform plan..."
-          terraform apply -auto-approve tfplan
+        run: terraform apply -auto-approve tfplan
