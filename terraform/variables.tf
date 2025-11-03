@@ -27,3 +27,9 @@ variable "email_notification" {
   description = "Email for job notifications"
   type        = string
 }
+
+variable "databricks_token" {
+  description = "Personal access token for Databricks workspace"
+  type        = string
+}
+

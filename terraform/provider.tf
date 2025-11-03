@@ -1,10 +1,5 @@
 terraform {
-  required_version = ">= 1.5.0"
   required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 3.98"
-    }
     databricks = {
       source  = "databricks/databricks"
       version = "~> 1.20.0"
@@ -12,10 +7,8 @@ terraform {
   }
 }
 
-provider "azurerm" {
-  features {}
-}
-
+# Use PAT authentication (simpler for local runs)
 provider "databricks" {
-  azure_workspace_resource_id = var.databricks_workspace_id
+  host  = "https://adb-3086481039813864.4.azuredatabricks.net"
+  token = var.databricks_token
 }
