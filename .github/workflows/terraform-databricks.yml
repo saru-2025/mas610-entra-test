@@ -30,8 +30,10 @@ jobs:
         run: |
           echo "🧹 Cleaning previous provider cache..."
           rm -rf .terraform .terraform.lock.hcl || true
-          echo "🚀 Initializing Terraform with upgrade..."
+          echo "🚀 Running terraform init -upgrade"
           terraform init -upgrade
+          echo "✅ Providers installed:"
+          terraform providers
 
   validate:
     name: 2️⃣ Terraform Validate
