@@ -26,7 +26,7 @@ jobs:
         run: |
           echo "Cloning Test repo history..."
           # 1. Clone ONLY the .git folder (no files checked out) to avoid 'vanished file' race condition
-          git clone --no-checkout --depth 1 $TEST_REPO_URL test-repo
+          git clone --no-checkout --depth 1 $TEST_REPO_URL test-repo || true
           
           # Change directory to the newly cloned test-repo
           cd test-repo
