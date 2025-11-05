@@ -17,21 +17,43 @@ jobs:
         run: |
           git config --global user.name "GitHub CI Bot"
           git config --global user.email "ci-bot@github.com"
-
+          
       - name: 🚀 Sync and Push updates to Test repo
         env:
-          TEST_REPO: https://saru-2025:${{ secrets.GITHUB_TEST_TOKEN }}@github.com/saru-2025/mas610-entra-test.git
+          # Use a variable for the secure URL without exposing the token in subsequent commands
+          TEST_REPO_URL: https://saru-2025:${{ secrets.GIT_TEST_TOKEN }}@github.com/saru-2025/mas610-entra-test.git
+        
         run: |
-          echo "Cloning Test repo..."
-          git clone $TEST_REPO test-repo
+          echo "Cloning Test repo history..."
+          # 1. Clone ONLY the .git folder (no files checked out) to avoid 'vanished file' race condition
+          git clone --no-checkout --depth 1 $TEST_REPO_URL test-repo
           
-          echo "Running rsync (ignore vanished files)..."
-          rsync -av --delete --ignore-errors ./ test-repo/ || true
-          echo "✅ rsync completed, even if warnings occurred."
-
+          # Change directory to the newly cloned test-repo
           cd test-repo
+          
+          # 2. Check out the main branch (now the .git folder is stable)
+          git checkout main
+          
+          # Move back to the root directory where the Dev files are
+          cd .. 
+          
+          echo "Running rsync to copy Dev contents over Test repo..."
+          # 3. Use rsync to copy ALL files from the Dev repo (./) to the Test repo (test-repo/)
+          # --delete ensures files deleted in Dev are deleted in Test.
+          # --exclude='.git' is VITAL to avoid overwriting the Git history we just cloned.
+          rsync -av --delete --exclude='.git' ./ test-repo/
+
+          # 4. Commit and Push the changes from the Test repo directory
+          cd test-repo
+          
+          echo "Checking for changes..."
           git add .
-          git status
+          
+          # Commit only if there are changes; '|| true' prevents failure if no changes exist
           git commit -m "🚀 Auto-sync Dev → Test - $GITHUB_SHA" || echo "✅ No new changes to commit"
-          git push origin main || echo "⚠️ Nothing to push or branch already up to date"
+          
+          # Push the changes. '|| true' prevents failure if the branch is already up to date, 
+          # though with a commit above this is less likely to be needed.
+          git push origin main
+          
           echo "🎉 Sync completed successfully!"
