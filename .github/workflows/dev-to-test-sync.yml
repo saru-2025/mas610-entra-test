@@ -2,8 +2,8 @@ name: 🚀 Promote Dev → Test
 
 on:
   push:
-    branches: [ main ]        # Trigger whenever main branch in Dev repo updates
-  workflow_dispatch:           # Allow manual run from GitHub Actions tab
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   sync-to-test:
@@ -18,18 +18,29 @@ jobs:
           git config --global user.name "GitHub CI Bot"
           git config --global user.email "ci-bot@github.com"
 
-      - name: 🚀 Push updates to Test repo
+      - name: 🚀 Sync and Push updates to Test repo
         env:
           TEST_REPO: https://github.com/saru-2025/mas610-entra-test.git
           GITHUB_TOKEN: ${{ secrets.GITHUB_TEST_TOKEN }}
         run: |
+          set +e   # ← prevents rsync exit code from stopping the job
+          echo "Cloning Test repo..."
           git clone $TEST_REPO test-repo
+
+          echo "Running rsync..."
           rsync -av --delete --ignore-errors \
             --exclude '.git' \
             --exclude '.github' \
             --exclude '.DS_Store' \
             ./ test-repo/
+          echo "rsync finished with code $?"
+
+          set -e   # resume normal error handling
           cd test-repo
-          git add.
-          git commit -m "🚀 Auto-sync Dev → Test - $GITHUB_SHA" || echo "No changes to commit"
+          git add .
+          git status
+          git commit -m "🚀 Auto-sync Dev → Test - $GITHUB_SHA" || echo "✅ No new changes to commit"
+
+          echo "Pushing changes to Test repo..."
           git push https://x-access-token:${GITHUB_TOKEN}@github.com/saru-2025/mas610-entra-test.git main
+          echo "✅ Sync complete"
