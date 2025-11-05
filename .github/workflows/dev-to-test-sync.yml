@@ -21,7 +21,7 @@ jobs:
       - name: Push updates to Test repo
         env:
           TEST_REPO: https://github.com/<your-username>/mas610-entra-test.git
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TEST_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.For test env }}
         run: |
           git clone $TEST_REPO test-repo
           rsync -av --delete --exclude '.git' --exclude '.github' ./ test-repo/
