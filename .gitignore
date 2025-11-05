@@ -1,21 +1,21 @@
+# Databricks / Python
+__pycache__/
+*.pyc
+*.pyo
+*.log
+*.egg-info/
+*.ipynb_checkpoints/
 
-# Terraform artifacts
-**/.terraform/*
-*.tfstate
-*.tfstate.*
-crash.log
-crash.*.log
-*.tfvars
-*.tfvars.json
-override.tf
-override.tf.json
-*_override.tf
-*_override.tf.json
-.terraformrc
-terraform.rc
-terraform.tfstate
-terraform.tfstate.backup
-*.tfplan
-*.tfvars
-.terraform/
-.terraform.lock.hcl
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Databricks DBC or notebook export artifacts
+*.dbc
+*.zip
+
+# Azure Data Factory local files
+*.local.json
+
