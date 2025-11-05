@@ -1,0 +1,9 @@
+{
+	"name": "adf-data-platform-test",
+	"location": "southeastasia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "e2026c18-3c14-47d2-acea-02406a9f43c2",
+		"tenantId": "6aaeadfe-7abb-4f83-96c7-d0aa5d9a549a"
+	}
+}
