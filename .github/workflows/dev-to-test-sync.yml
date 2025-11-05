@@ -20,7 +20,7 @@ jobs:
 
       - name: Push updates to Test repo
         env:
-          TEST_REPO: https://github.com/<your-username>/mas610-entra-test.git
+          TEST_REPO: https://github.com/saru-2025/mas610-entra-test.git
           GITHUB_TOKEN: ${{ secrets.For test env }}
         run: |
           git clone $TEST_REPO test-repo
