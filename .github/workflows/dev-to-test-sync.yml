@@ -2,31 +2,34 @@ name: 🚀 Promote Dev → Test
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    branches: [ main ]        # Trigger whenever main branch in Dev repo updates
+  workflow_dispatch:           # Allow manual run from GitHub Actions tab
 
 jobs:
   sync-to-test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Dev repo
+      - name: 🧩 Checkout Dev repo
         uses: actions/checkout@v4
 
-      - name: Configure Git
+      - name: ⚙️ Configure Git
         run: |
           git config --global user.name "GitHub CI Bot"
           git config --global user.email "ci-bot@github.com"
 
-      - name: Push updates to Test repo
+      - name: 🚀 Push updates to Test repo
         env:
           TEST_REPO: https://github.com/saru-2025/mas610-entra-test.git
-          GITHUB_TOKEN: ${{ secrets.For test env }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TEST_TOKEN }}
         run: |
           git clone $TEST_REPO test-repo
-          rsync -av --delete --exclude '.git' --exclude '.github' ./ test-repo/
+          rsync -av --delete \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude '.DS_Store' \
+            ./ test-repo/
           cd test-repo
           git add.
-          git commit -m "🚀 Auto-sync Dev → Test - $GITHUB_SHA" || echo "No changes"
-          git push origin main
-
+          git commit -m "🚀 Auto-sync Dev → Test - $GITHUB_SHA" || echo "No changes to commit"
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/saru-2025/mas610-entra-test.git main
