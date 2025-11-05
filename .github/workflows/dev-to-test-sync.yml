@@ -10,37 +10,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🧩 Checkout Dev repo
+      - name: Checkout Dev repo
         uses: actions/checkout@v4
 
-      - name: ⚙️ Configure Git
+      - name: Configure Git
         run: |
           git config --global user.name "GitHub CI Bot"
           git config --global user.email "ci-bot@github.com"
 
-      - name: 🚀 Sync and Push updates to Test repo
+      - name: Push updates to Test repo
         env:
-          TEST_REPO: https://github.com/saru-2025/mas610-entra-test.git
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TEST_TOKEN }}
+          TEST_REPO: https://saru-2025:${{ secrets.GITHUB_TEST_TOKEN }}@github.com/saru-2025/mas610-entra-test.git
         run: |
-          set +e   # ← prevents rsync exit code from stopping the job
-          echo "Cloning Test repo..."
           git clone $TEST_REPO test-repo
-
-          echo "Running rsync..."
-          rsync -av --delete --ignore-errors \
-            --exclude '.git' \
-            --exclude '.github' \
-            --exclude '.DS_Store' \
-            ./ test-repo/
-          echo "rsync finished with code $?"
-
-          set -e   # resume normal error handling
+          rsync -av --delete --exclude '.git' --exclude '.github' ./ test-repo/
           cd test-repo
           git add .
-          git status
           git commit -m "🚀 Auto-sync Dev → Test - $GITHUB_SHA" || echo "✅ No new changes to commit"
-
-          echo "Pushing changes to Test repo..."
-          git push https://x-access-token:${GITHUB_TOKEN}@github.com/saru-2025/mas610-entra-test.git main
-          echo "✅ Sync complete"
+          git push origin main
