@@ -1,0 +1,21 @@
+# Databricks / Python
+__pycache__/
+*.pyc
+*.pyo
+*.log
+*.egg-info/
+*.ipynb_checkpoints/
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Databricks DBC or notebook export artifacts
+*.dbc
+*.zip
+
+# Azure Data Factory local files
+*.local.json
+
