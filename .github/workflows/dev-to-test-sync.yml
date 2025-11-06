@@ -1,8 +1,6 @@
 name: 🚀 Deploy to Test ADF & Databricks
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
