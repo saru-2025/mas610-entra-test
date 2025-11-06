@@ -1,38 +1,59 @@
-- name: 🚀 Sync and Push updates to Test repo
-        env:
-          TEST_REPO_URL: https://saru-2025:${{ secrets.GIT_TEST_TOKEN }}@github.com/saru-2025/mas610-entra-test.git
-        
+name: 🚀 Deploy to Test ADF & Databricks
+
+on:
+  push:
+    branches: [ main ]        # or use 'workflow_dispatch:' for manual
+  workflow_dispatch:
+
+jobs:
+  deploy-test:
+    runs-on: ubuntu-latest
+    environment: test
+
+    steps:
+      # 1️⃣ Checkout Test repo
+      - name: 🧩 Checkout Test repo
+        uses: actions/checkout@v4
+
+      # 2️⃣ Login to Azure
+      - name: 🔐 Azure Login
+        uses: azure/login@v1
+        with:
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "tenantId": "${{ secrets.AZURE_TENANT_ID }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+            }
+
+      # 3️⃣ Deploy ADF artifacts (datasets, pipelines, triggers)
+      - name: 🚀 Deploy Azure Data Factory JSONs
+        uses: azure/data-factory-deploy-action@v1.3.3
+        with:
+          resourceGroupName: rg_data_platform_test
+          dataFactoryName: adf-data-platform-test
+          armTemplateFile: factory/adf-data-platform-test.json
+          armTemplateParametersFile: factory/arm-template-parameters.json
+          overwrite: true
+
+      # 4️⃣ Install Databricks CLI
+      - name: ⚙️ Install Databricks CLI
         run: |
-          echo "Cloning Test repo history..."
-          
-          # Use the fully robust strategy: Clone the Git history only.
-          # We use "set +e" (turn off immediate exit on error) just for the clone 
-          # to ensure code 24 does not fail the step.
-          set +e
-          git clone --no-checkout --depth 1 $TEST_REPO_URL test-repo
-          CLONE_EXIT_CODE=$?
-          set -e # Re-enable immediate exit on error
-          
-          # Check if the clone failed with an unexpected code (e.g., 128 for auth)
-          if [ $CLONE_EXIT_CODE -ne 0 ] && [ $CLONE_EXIT_CODE -ne 24 ]; then
-            echo "Error: Git clone failed with UNEXPECTED exit code $CLONE_EXIT_CODE."
-            exit 1
-          fi
+          pip install databricks-cli
 
-          echo "✅ Git clone completed (warning/code 24 ignored)."
+      # 5️⃣ Configure Databricks CLI for Test
+      - name: 🔑 Configure Databricks
+        run: |
+          databricks configure --token <<EOF
+          ${{ secrets.DATABRICKS_HOST }}
+          ${{ secrets.DATABRICKS_TOKEN }}
+          EOF
 
-          # Change directory to the newly cloned test-repo
-          cd test-repo
-          git checkout main
-          cd .. # Move back to the root directory
+      # 6️⃣ Deploy notebooks to Test workspace
+      - name: 📦 Deploy Databricks Notebooks
+        run: |
+          echo "Uploading notebooks to Test workspace..."
+          databricks workspace import_dir \
+            notebooks /Shared/Test_Notebooks --overwrite
 
-          echo "Running rsync to copy Dev contents over Test repo..."
-          rsync -av --delete --exclude='.git' ./ test-repo/
-
-          # 4. Commit and Push the changes from the Test repo directory
-          cd test-repo
-          git add.
-          git commit -m "🚀 Auto-sync Dev → Test - $GITHUB_SHA" || echo "✅ No new changes to commit"
-          git push origin main
-          
-          echo "🎉 Sync completed successfully!"
