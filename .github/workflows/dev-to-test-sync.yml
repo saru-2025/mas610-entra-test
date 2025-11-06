@@ -17,9 +17,9 @@ jobs:
         with:
           creds: |
             {
-              "clientId": "${{ secrets.sp-client-id}}",
-              "clientSecret": "${{ secrets.sp-secret }}",
-              "tenantId": "${{ secrets.tenant-id }}",
+              "clientId": "${{ secrets.SP-CLIENT-ID-TEST}}",
+              "clientSecret": "${{ secrets.SP-CLIENT-SECRET-TEST }}",
+              "tenantId": "${{ secrets.SP-TENANT-ID-TEST}}",
               "subscriptionId": "${{ secrets.Subcription-id }}"
             }
 
