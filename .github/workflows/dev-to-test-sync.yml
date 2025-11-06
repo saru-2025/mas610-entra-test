@@ -2,7 +2,7 @@ name: 🚀 Deploy to Test ADF & Databricks
 
 on:
   push:
-    branches: [ main ]        # or use 'workflow_dispatch:' for manual
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -11,11 +11,9 @@ jobs:
     environment: test
 
     steps:
-      # 1️⃣ Checkout Test repo
       - name: 🧩 Checkout Test repo
         uses: actions/checkout@v4
 
-      # 2️⃣ Login to Azure
       - name: 🔐 Azure Login
         uses: azure/login@v1
         with:
@@ -27,22 +25,22 @@ jobs:
               "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
             }
 
-      # 3️⃣ Deploy ADF artifacts (datasets, pipelines, triggers)
-      - name: 🚀 Deploy Azure Data Factory JSONs
-        uses: azure/data-factory-deploy-action@v1.3.3
+      # ✅ Deploy ADF template using ARM Deploy Action
+      - name: 🚀 Deploy Azure Data Factory ARM Template
+        uses: Azure/arm-deploy@v1
         with:
+          scope: resourcegroup
           resourceGroupName: rg_data_platform_test
-          dataFactoryName: adf-data-platform-test
-          armTemplateFile: factory/adf-data-platform-test.json
-          armTemplateParametersFile: factory/arm-template-parameters.json
-          overwrite: true
+          template: factory/adf-data-platform-test.json
+          parameters: factory/arm-template-parameters.json
+          deploymentName: adf-test-deployment
+          failOnStdErr: false
 
-      # 4️⃣ Install Databricks CLI
+      # ⚙️ Install Databricks CLI
       - name: ⚙️ Install Databricks CLI
-        run: |
-          pip install databricks-cli
+        run: pip install databricks-cli
 
-      # 5️⃣ Configure Databricks CLI for Test
+      # 🔑 Configure Databricks CLI
       - name: 🔑 Configure Databricks
         run: |
           databricks configure --token <<EOF
@@ -50,10 +48,8 @@ jobs:
           ${{ secrets.DATABRICKS_TOKEN }}
           EOF
 
-      # 6️⃣ Deploy notebooks to Test workspace
-      - name: 📦 Deploy Databricks Notebooks
+      # 📦 Upload Notebooks
+      - name: 📦 Upload Notebooks to Test Workspace
         run: |
           echo "Uploading notebooks to Test workspace..."
-          databricks workspace import_dir \
-            notebooks /Shared/Test_Notebooks --overwrite
-
+          databricks workspace import_dir notebooks /Shared/Test_Notebooks --overwrite
