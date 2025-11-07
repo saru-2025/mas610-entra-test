@@ -12,15 +12,13 @@ jobs:
       - name: 🧩 Checkout Test repo
         uses: actions/checkout@v4
 
-      - name: 🔐 Azure Login
+      - name: 🔑 Azure Login
         uses: azure/login@v1
         with:
-          creds:'{
-              "clientId":"${{ secrets.SP-CLIENT-ID-TEST}}",
-              "clientSecret":"${{ secrets.SP-CLIENT-SECRET-TEST}}",
-              "tenantId":"${{ secrets.SP-TENANT-ID-TEST}}",
-              "subscriptionId":"${{ secrets.Subcription-id}}"
-            }'
+          # Pass the JSON creds object as a single, quoted string.
+          # The entire JSON object MUST be on a single line for the action to parse it correctly.
+          # We are removing the single quotes ('...') and placing the whole thing on one line.
+          creds: '{"clientId":"${{ secrets.SP-CLIENT-ID-TEST }}", "clientSecret":"${{ secrets.SP-CLIENT-SECRET-TEST }}", "tenantId":"${{ secrets.SP-TENANT-ID-TEST }}", "subscriptionId":"${{ secrets.Subscription-id }}"}'
 
       # ✅ Deploy ADF template using ARM Deploy Action
       - name: 🚀 Deploy Azure Data Factory ARM Template
