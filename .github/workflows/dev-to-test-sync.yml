@@ -15,13 +15,12 @@ jobs:
       - name: 🔐 Azure Login
         uses: azure/login@v1
         with:
-          creds: |
-            {
-              "clientId": "${{ secrets.SP-CLIENT-ID-TEST}}",
-              "clientSecret": "${{ secrets.SP-CLIENT-SECRET-TEST}}",
-              "tenantId": "${{ secrets.SP-TENANT-ID-TEST}}",
-              "subscriptionId": "${{ secrets.Subcription-id}}"
-            }
+          creds:'{
+              "clientId":"${{ secrets.SP-CLIENT-ID-TEST}}",
+              "clientSecret":"${{ secrets.SP-CLIENT-SECRET-TEST}}",
+              "tenantId":"${{ secrets.SP-TENANT-ID-TEST}}",
+              "subscriptionId":"${{ secrets.Subcription-id}}"
+            }'
 
       # ✅ Deploy ADF template using ARM Deploy Action
       - name: 🚀 Deploy Azure Data Factory ARM Template
