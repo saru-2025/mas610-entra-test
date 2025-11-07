@@ -18,9 +18,9 @@ jobs:
           creds: |
             {
               "clientId": "${{ secrets.SP-CLIENT-ID-TEST}}",
-              "clientSecret": "${{ secrets.SP-CLIENT-SECRET-TEST }}",
+              "clientSecret": "${{ secrets.SP-CLIENT-SECRET-TEST}}",
               "tenantId": "${{ secrets.SP-TENANT-ID-TEST}}",
-              "subscriptionId": "${{ secrets.Subcription-id }}"
+              "subscriptionId": "${{ secrets.Subcription-id}}"
             }
 
       # ✅ Deploy ADF template using ARM Deploy Action
