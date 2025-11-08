@@ -1,0 +1,22 @@
+name: 🔐 Test Azure Login
+
+on:
+  workflow_dispatch:  # allows you to run it manually
+
+jobs:
+  login-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: >
+            {
+              "clientId": "${{ secrets.sp-client-id }}",
+              "clientSecret": "${{ secrets.sp-secret }}",
+              "tenantId": "${{ secrets.tenant-id }}",
+              "subscriptionId": "${{ secrets.subscription-id }}"
+            }
+
+      - name: Check Azure Context
+        run: az account show
