@@ -1,0 +1,61 @@
+name: 🚀 Deploy to Test ADF & Databricks
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy-test:
+    runs-on: ubuntu-latest
+    environment: test
+
+    steps:
+      # 1️⃣ Checkout Test repo
+      - name: 🧩 Checkout Test repo
+        uses: actions/checkout@v4
+
+      # 2️⃣ Azure Login
+      - name: 🔐 Azure Login
+        uses: azure/login@v1
+        with:
+          creds: >
+            {
+              "clientId": "${{ secrets.SPCLIENTID }}",
+              "clientSecret": "${{ secrets.SPSECRET }}",
+              "tenantId": "${{ secrets.TENANTID }}",
+              "subscriptionId": "${{ secrets.SUBSCRPTION }}"
+            }
+
+      # 3️⃣ Deploy Azure Data Factory template (ARM)
+      - name: 🚀 Deploy Azure Data Factory ARM Template
+        uses: Azure/arm-deploy@v1
+        with:
+          scope: resourcegroup
+          resourceGroupName: rg_data_platform_test
+          template: factory/adf-data-platform-test.json
+          parameters: factory/arm-template-parameters.json
+          deploymentName: adf-test-deployment
+          failOnStdErr: false
+
+      # 4️⃣ Install Databricks CLI
+      - name: ⚙️ Install Databricks CLI
+        run: pip install databricks-cli
+
+      # 5️⃣ Configure Databricks CLI
+      - name: 🔑 Configure Databricks
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKSHOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKSTOKEN }}
+        run: |
+          echo "Setting up Databricks CLI..."
+          databricks configure --token <<EOF
+          $DATABRICKS_HOST
+          $DATABRICKS_TOKEN
+          EOF
+
+      # 6️⃣ Upload notebooks to Test workspace
+      - name: 📦 Upload Notebooks to Test Workspace
+        run: |
+          echo "Uploading notebooks to Test workspace..."
+          databricks workspace import_dir notebooks /Shared/Test_Notebooks --overwrite
