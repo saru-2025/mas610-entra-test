@@ -12,10 +12,10 @@ jobs:
         with:
           creds: >
             {
-              "clientId": "${{ secrets.sp-client-id }}",
-              "clientSecret": "${{ secrets.sp-secret }}",
-              "tenantId": "${{ secrets.tenant-id }}",
-              "subscriptionId": "${{ secrets.subscription-id }}"
+              "clientId": "${{ secrets.SPCLIENTID }}",
+              "clientSecret": "${{ secrets.SPSECRET}}",
+              "tenantId": "${{ secrets.TENANTID }}",
+              "subscriptionId": "${{ secrets.SUBSCRPTION}}"
             }
 
       - name: Check Azure Context
