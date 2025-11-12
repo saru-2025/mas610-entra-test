@@ -1,9 +1,25 @@
 {
-	"name": "adf-data-platform-test",
-	"location": "southeastasia",
-	"identity": {
-		"type": "SystemAssigned",
-		"principalId": "e2026c18-3c14-47d2-acea-02406a9f43c2",
-		"tenantId": "6aaeadfe-7abb-4f83-96c7-d0aa5d9a549a"
-	}
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "factoryName": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "identity": {
+      "type": "object"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DataFactory/factories",
+      "apiVersion": "2018-06-01",
+      "name": "[parameters('factoryName')]",
+      "location": "[parameters('location')]",
+      "identity": "[parameters('identity')]",
+      "properties": {}
+    }
+  ]
 }
