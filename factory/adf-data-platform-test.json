@@ -1,5 +1,5 @@
 {
-	"name": "adf-data-platform",
+	"name": "adf-data-platform-test",
 	"location": "southeastasia",
 	"identity": {
 		"type": "SystemAssigned",
